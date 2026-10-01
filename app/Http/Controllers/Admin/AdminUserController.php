@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Services\CommissionService;
 
 class AdminUserController extends Controller
 {
     public function index()
     {
         $users = User::with('plan')->latest()->paginate(10);
+
         return view('admin.users', compact('users'));
     }
 
@@ -18,8 +19,9 @@ class AdminUserController extends Controller
     {
         $levels = [];
         $current = collect([$user]);
+        $maxLevel = CommissionService::MAX_LEVEL;
 
-        for ($lvl = 1; $lvl <= 7; $lvl++) {
+        for ($lvl = 1; $lvl <= $maxLevel; $lvl++) {
             $members = User::whereIn('referred_by', $current->pluck('id'))
                 ->with('plan')
                 ->orderBy('created_at')
@@ -35,7 +37,7 @@ class AdminUserController extends Controller
 
             if ($current->isEmpty()) {
                 // Fill remaining levels as empty
-                for ($j = $lvl + 1; $j <= 7; $j++) {
+                for ($j = $lvl + 1; $j <= $maxLevel; $j++) {
                     $levels[$j] = ['members' => collect(), 'count' => 0, 'active' => 0];
                 }
                 break;

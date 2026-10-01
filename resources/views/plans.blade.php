@@ -171,7 +171,7 @@
                 <h2 class="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-gray-900 mb-4">
                     Ready to Start <span class="gradient-text">Earning?</span>
                 </h2>
-                <p class="text-gray-500 text-base sm:text-lg max-w-xl mx-auto mb-3">Join thousands of Pakistanis earning passive income.</p>
+                <p class="text-gray-500 text-base sm:text-lg max-w-xl mx-auto mb-3">Earn referral commissions with our 7-level system.</p>
                 <p class="urdu-text text-[#43a027]/50 text-sm max-w-xl mx-auto mb-8">دیر نہ کریں۔ آج ہی رجسٹر کریں اور اپنی earning شروع کریں۔</p>
                 <a href="{{ route('register') }}" class="btn-primary text-lg inline-flex items-center">
                     <span>Create Free Account</span>

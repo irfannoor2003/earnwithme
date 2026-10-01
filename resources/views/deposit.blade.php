@@ -87,7 +87,8 @@
                 </span>
                 Deposit Form <span class="font-urdu text-sm">ڈپوزٹ فارم</span>
             </h3>
-            <form method="POST" action="{{ route('deposit.store') }}" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
+            @php($selectedPlan = $plans->firstWhere('id', old('plan_id')) ?? $plans->first())
+            <form method="POST" action="{{ route('deposit.store') }}" class="space-y-6" x-data="{ submitting: false, amount: {{ json_encode((float) ($selectedPlan?->price ?? 0)) }} }" @submit="submitting = true">
                 @csrf
 
                 <!-- Plan Selection -->
@@ -96,7 +97,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         @foreach($plans as $plan)
                             <label class="relative cursor-pointer group">
-                                <input type="radio" name="plan_id" value="{{ $plan->id }}" class="peer sr-only" {{ old('plan_id') == $plan->id ? 'checked' : '' }} required>
+                                <input type="radio" name="plan_id" value="{{ $plan->id }}" data-price="{{ $plan->price }}" class="peer sr-only" {{ old('plan_id') == $plan->id || (! old('plan_id') && $loop->first) ? 'checked' : '' }} @change="amount = Number($event.target.dataset.price)" required>
                                 <div class="rounded-xl p-4 text-center transition-all duration-300 peer-checked:shadow-lg bg-gray-50 border-2 border-gray-200 peer-checked:border-[#4caf2f] peer-checked:bg-[#f0faf0]">
                                     <p class="text-gray-900 font-bold text-lg">Rs {{ number_format($plan->price) }}</p>
                                     <p class="text-sm mt-1 text-gray-400">{{ $plan->name }}</p>
@@ -113,8 +114,8 @@
                 <!-- Amount -->
                 <div>
                     <label for="amount" class="block text-sm font-semibold mb-2 text-gray-600">Amount (Rs)</label>
-                    <input type="number" name="amount" id="amount" value="{{ old('amount', 350) }}" min="170" max="70000" step="1" placeholder="Min Rs 170 / Max Rs 70,000" class="w-full rounded-xl px-4 py-3 text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-colors bg-gray-50 border border-gray-200" required x-data="{ amount: 350 }" x-model="amount" @input="amount = $event.target.value">
-                    <p class="text-xs mt-1.5 text-gray-500">Minimum Rs 170 / Maximum Rs 70,000</p>
+                    <input type="number" name="amount" id="amount" value="{{ $selectedPlan?->price ?? '' }}" step="0.01" class="w-full rounded-xl px-4 py-3 text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-colors bg-gray-50 border border-gray-200" required readonly x-model="amount">
+                    <p class="text-xs mt-1.5 text-gray-500">The amount is set by your selected plan.</p>
                     @error('amount')
                         <p class="text-xs mt-2 text-red-500">{{ $message }}</p>
                     @enderror

@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Deposit;
-use App\Models\Withdrawal;
 use App\Models\Commission;
-use App\Models\Plan;
+use App\Models\Deposit;
+use App\Models\User;
+use App\Models\Withdrawal;
 
 class AdminController extends Controller
 {

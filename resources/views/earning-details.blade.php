@@ -141,7 +141,7 @@
                 ['title' => 'Team Ko Guide Karo', 'desc' => 'Apni team ko bhi batayein ke kaise refer karna hai. Jab wo refer karenge to aap ko bhi benefit milega.'],
                 ['title' => 'Sabr aur Consistency', 'desc' => 'Earning mein waqt lagta hai. Roz koshish karte raho, consistent raho. Bade results zaroor milenge InshAllah.'],
                 ['title' => 'Dil Se Kaam Karo', 'desc' => 'Logon ko honestly batayein ke Me Earning kya hai. Trust banao, relationships grow karo. Long-term earning hogi.'],
-                ['title' => 'Level 7 Tak Pahuncho', 'desc' => 'Apni team ko samjhao ke wo bhi refer karein. Jab aap ki team 7 levels tak phaili hogi, to passive income hogi.'],
+                ['title' => 'Level 7 Tak Pahuncho', 'desc' => 'Apni team ko samjhao ke wo bhi refer karein. Jab aap ki team 7 levels tak phaili hogi, to aap ko commission milega.'],
             ];
             @endphp
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

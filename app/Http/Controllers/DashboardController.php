@@ -10,7 +10,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user()->load('plan', 'referrals');
-        
+
         $totalCommissions = Commission::where('to_user_id', $user->id)->sum('amount');
         $pendingDeposits = Deposit::where('user_id', $user->id)->where('status', 'pending')->count();
         $activeReferrals = $user->referrals()->where('is_active', true)->count();

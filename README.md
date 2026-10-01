@@ -1,58 +1,75 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Me Earning
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Me Earning is a Laravel referral-earning platform with plan activation, manual JazzCash/EasyPaisa deposits, withdrawals, referral commissions, and an admin area.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3 or newer with Laravel's required extensions
+- Composer
+- MySQL
+- Node.js and npm
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Local Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Install PHP dependencies and create the environment file:
 
-## Learning Laravel
+   ```powershell
+   composer install
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+2. Configure `.env` for your local MySQL database. Set private admin credentials before seeding:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```dotenv
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=uzairproject
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ADMIN_EMAIL=your-admin@example.com
+   ADMIN_PASSWORD=use-a-unique-strong-password
+   ```
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+3. Initialize the application:
 
-## Agentic Development
+   ```powershell
+   php artisan key:generate
+   php artisan migrate
+   php artisan db:seed
+   npm install
+   npm run build
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+The seeder creates the starter Premium plan. It creates an admin only when `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set. Never commit `.env` or real credentials.
 
-```bash
-composer require laravel/boost --dev
+## Web Server
 
-php artisan boost:install
+Set the virtual host and production web server document root to this project's `public/` directory. Do not serve the repository root: it contains application source, dependencies, environment examples, and Git metadata. Disable directory listing.
+
+## Fixes In This Checkout
+
+- Deposit submissions must match the selected plan price; payment transaction IDs cannot be reused for the same payment method.
+- Withdrawal deductions and admin decisions are transactional. Rejection restores the amount and fee and can only happen once.
+- Deposit approval is atomic and one-time. The Rs 20 direct-referral bonus is paid after the referred user's first approved plan.
+- User email verification now uses Laravel's verification contract; login attempts are rate-limited.
+- Contact submissions are emailed to `CONTACT_FORM_RECIPIENT`; WhatsApp links use the shared `WHATSAPP_NUMBER` setting.
+- The seeder is repeatable and contains no fixed admin password. `composer run setup` seeds the starter plan.
+- Feature tests cover deposit validation, duplicate payment references, withdrawal refunds, referral bonuses, contact mail, and verification mail.
+
+## Remaining Checks
+
+- The payment-reference index migration has been applied to the local `uzairproject` database. On another database, run `php artisan migrate`; resolve any duplicate `(method, transaction_id)` values before adding the unique index. Do not drop the database to work around this.
+- Confirm `WHATSAPP_NUMBER` is the correct business number and `CONTACT_FORM_RECIPIENT` is monitored.
+- Configure a real SMTP/mail provider for deployment. The example environment uses the `log` mailer, which writes messages to Laravel logs instead of delivering them.
+- If this database was seeded by an older version, rotate or remove any admin account that still uses the former default password.
+- Test a real deposit approval, withdrawal approval/rejection, signup verification link, contact email, and admin login in the target environment.
+- The checks below passed locally after these fixes. Run them again after later changes.
+
+## Checks
+
+```powershell
+php artisan test
+php artisan view:cache
+npm run build
 ```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Plan;
 use App\Models\Deposit;
+use App\Models\Plan;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DepositController extends Controller
 {
@@ -20,11 +21,16 @@ class DepositController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'plan_id' => 'required|exists:plans,id',
-            'amount' => 'required|numeric|min:170|max:70000',
+            'plan_id' => ['required', 'integer', Rule::exists('plans', 'id')->where(fn ($query) => $query->where('is_active', true))],
+            'amount' => 'required|numeric|decimal:0,2|min:170|max:70000',
             'payment_method' => 'required|in:jazzcash,easypaisa',
             'account_number' => 'required|string|max:15',
-            'transaction_id' => 'required|string|max:50',
+            'transaction_id' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('deposits', 'transaction_id')->where(fn ($query) => $query->where('method', $request->input('payment_method'))),
+            ],
         ]);
 
         $user = auth()->user();
@@ -33,18 +39,25 @@ class DepositController extends Controller
             return redirect()->route('deposit')->with('error', 'You already have an active plan. You can only buy one plan at a time.');
         }
 
-        $exists = Deposit::where('user_id', $user->id)
-            ->where('transaction_id', $request->transaction_id)
-            ->exists();
+        $alreadyPending = Deposit::where('user_id', $user->id)->where('status', 'pending')->exists();
+        if ($alreadyPending) {
+            return redirect()->route('deposit')->with('error', 'You already have a deposit awaiting review. Please wait for it to be processed.');
+        }
 
-        if ($exists) {
-            return redirect()->route('deposit')->with('error', 'A deposit with this Transaction ID already exists.');
+        $plan = Plan::whereKey($request->integer('plan_id'))
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        if ((int) round((float) $request->input('amount') * 100) !== (int) round((float) $plan->price * 100)) {
+            return back()->withInput()->withErrors([
+                'amount' => 'The deposit amount must match the selected plan price.',
+            ]);
         }
 
         Deposit::create([
             'user_id' => $user->id,
-            'plan_id' => $request->plan_id,
-            'amount' => $request->amount,
+            'plan_id' => $plan->id,
+            'amount' => $plan->price,
             'method' => $request->payment_method,
             'account_number' => $request->account_number,
             'transaction_id' => $request->transaction_id,

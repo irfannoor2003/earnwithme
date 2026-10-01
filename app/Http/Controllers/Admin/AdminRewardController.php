@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reward;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminRewardController extends Controller
 {
@@ -21,26 +22,38 @@ class AdminRewardController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:1|max:1000000',
+            // decimal:0,2 blocks scientific notation and exponents, which
+            // otherwise pass a bare `numeric` check and then get rounded by
+            // the decimal(12,2) column.
+            'amount' => ['required', 'numeric', 'decimal:0,2', 'min:1', 'max:1000000'],
             'reason' => 'required|string|max:255',
         ]);
 
-        $user = User::findOrFail($request->user_id);
+        $amount = round((float) $request->amount, 2);
 
-        $reward = Reward::create([
-            'user_id' => $user->id,
-            'issued_by' => auth()->id(),
-            'amount' => $request->amount,
-            'reason' => $request->reason,
-        ]);
+        $issued = DB::transaction(function () use ($request, $amount) {
+            $user = User::query()->lockForUpdate()->findOrFail($request->user_id);
 
-        // Credit the user's balance immediately
-        $user->increment('balance', $request->amount);
-        $user->increment('total_earned', $request->amount);
+            $reward = Reward::create([
+                'user_id' => $user->id,
+                'issued_by' => auth()->id(),
+                'amount' => $amount,
+                'reason' => $request->reason,
+            ]);
+
+            // Credit the user's balance in the same transaction as the reward
+            // row, so the ledger can never disagree with itself.
+            $user->increment('balance', $amount);
+            $user->increment('total_earned', $amount);
+
+            return [$reward, $user->fresh()];
+        });
+
+        [$reward, $user] = $issued;
 
         return redirect()
             ->route('admin.rewards')
-            ->with('success', "Reward of Rs " . number_format($request->amount) . " issued to {$user->name}. Balance credited.");
+            ->with('success', 'Reward of Rs '.number_format($amount, 2)." issued to {$user->name}. Balance credited.");
     }
 
     public function receipt(Reward $reward)

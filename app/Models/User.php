@@ -2,23 +2,34 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'referral_code', 'referred_by', 'plan_id', 'is_active', 'is_admin', 'balance', 'total_earned'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'referral_code', 'referred_by', 'plan_id', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
-    use HasFactory, Notifiable, MustVerifyEmail;
+    use CanResetPassword, HasFactory, MustVerifyEmail, Notifiable;
+
+    /**
+     * Deliberately NOT mass assignable: is_admin, balance, total_earned.
+     *
+     * balance and total_earned are only ever moved with increment()/decrement()
+     * and forceFill(), which bypass this guard, and is_admin only via the
+     * seeder. Keeping them off the fillable list means a controller that
+     * passes request input to create()/update() cannot grant admin rights or
+     * mint credit.
+     */
+    protected $guarded = ['is_admin', 'balance', 'total_earned'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -33,9 +44,22 @@ class User extends Authenticatable
     {
         static::creating(function (User $user) {
             if (empty($user->referral_code)) {
-                $user->referral_code = strtoupper(Str::random(8));
+                $user->referral_code = static::generateReferralCode();
             }
         });
+    }
+
+    /**
+     * Referral codes are a unique column, so a collision must be retried
+     * rather than surfaced to the member as a 500 on the signup form.
+     */
+    public static function generateReferralCode(): string
+    {
+        do {
+            $code = strtoupper(Str::random(8));
+        } while (static::where('referral_code', $code)->exists());
+
+        return $code;
     }
 
     public function referrer(): BelongsTo
@@ -75,7 +99,7 @@ class User extends Authenticatable
 
     public function getReferralLink(): string
     {
-        return url('/register?ref=' . $this->referral_code);
+        return url('/register?ref='.$this->referral_code);
     }
 
     public function getActiveDirectReferrals(): int

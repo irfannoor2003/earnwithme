@@ -24,7 +24,7 @@
             <div class="relative">
                 <p class="text-sm font-medium mb-1" style="color: rgba(255,255,255,0.8);">Available Balance</p>
                 <p class="text-4xl font-bold tracking-tight">Rs {{ number_format($user->balance, 2) }}</p>
-                <p class="text-xs mt-2" style="color: rgba(255,255,255,0.6);">Min: Rs 170 | Max: Rs 70,000 | Fee: 1%</p>
+                <p class="text-xs mt-2" style="color: rgba(255,255,255,0.6);">Min: Rs {{ number_format($min, 0) }} | Max: Rs {{ number_format($max, 0) }} | Fee: {{ rtrim(rtrim(number_format((float) config('withdrawals.fee_percent'), 2, '.', ''), '0'), '.') }}%</p>
             </div>
         </div>
 
@@ -42,24 +42,36 @@
                 @csrf
 
                 <!-- Amount -->
-                <div x-data="{ amount: {{ old('amount', 170) }}, fee: 0, total: 0 }" x-init="fee = Math.round(amount * 0.01); total = amount + fee;">
+                @php
+                    $feePct = (float) config('withdrawals.fee_percent');
+                    $seedAmount = (float) old('amount', $defaultAmount);
+                    // Mirrors WithdrawController::feeFor() exactly: 2dp half-up rounding.
+                    $seedFee = round($seedAmount * ($feePct / 100), 2);
+                    $seedTotal = round($seedAmount + $seedFee, 2);
+                @endphp
+                <div x-data="{
+                        amount: {{ $seedAmount }},
+                        feePercent: {{ $feePct }},
+                        get fee() { return Math.round(Number(this.amount) * this.feePercent) / 100; },
+                        get total() { return Math.round((Number(this.amount) + this.fee) * 100) / 100; },
+                    }">
                     <label for="amount" class="block text-sm font-semibold mb-2 text-gray-600">Amount (Rs)</label>
-                    <input type="number" name="amount" id="amount" value="{{ old('amount', 170) }}" min="170" max="70000" step="1" placeholder="Min Rs 170 / Max Rs 70,000" class="w-full rounded-xl px-4 py-3 text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-colors bg-gray-50 border border-gray-200" required x-model="amount" @input="fee = Math.round(amount * 0.01); total = amount + fee;">
+                    <input type="number" name="amount" id="amount" value="{{ $seedAmount }}" min="{{ $min }}" max="{{ $max }}" step="0.01" placeholder="Min Rs {{ number_format($min, 0) }} / Max Rs {{ number_format($max, 0) }}" class="w-full rounded-xl px-4 py-3 text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-colors bg-gray-50 border border-gray-200" required x-model="amount">
                     <div class="mt-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
                         <div class="flex justify-between text-sm mb-1">
                             <span class="text-gray-500">Withdrawal Amount:</span>
-                            <span class="font-semibold text-gray-900" x-text="'Rs ' + Number(amount).toLocaleString()">Rs 170</span>
+                            <span class="font-semibold text-gray-900" x-text="'Rs ' + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})">Rs {{ number_format($defaultAmount, 2) }}</span>
                         </div>
                         <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-500">Fee (1%):</span>
-                            <span class="font-semibold text-amber-600" x-text="'Rs ' + Number(fee).toLocaleString()">Rs 10</span>
+                            <span class="text-gray-500">Fee ({{ rtrim(rtrim(number_format($feePct, 2, '.', ''), '0'), '.') }}%):</span>
+                            <span class="font-semibold text-amber-600" x-text="'Rs ' + fee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})">Rs {{ number_format($seedFee, 2) }}</span>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between text-sm">
                             <span class="text-gray-600 font-medium">Total Deducted:</span>
-                            <span class="font-bold text-gray-900" x-text="'Rs ' + Number(total).toLocaleString()">Rs 1,010</span>
+                            <span class="font-bold text-gray-900" x-text="'Rs ' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})">Rs {{ number_format($seedTotal, 2) }}</span>
                         </div>
                     </div>
-                    <p class="text-xs mt-1.5 text-gray-500">Min: Rs 170 / Max: Rs 70,000 | 1% fee applies</p>
+                    <p class="text-xs mt-1.5 text-gray-500">Min: Rs {{ number_format($min, 0) }} / Max: Rs {{ number_format($max, 0) }} | fee applies</p>
                     @error('amount')
                         <p class="text-xs mt-2 text-red-500">{{ $message }}</p>
                     @enderror
@@ -104,7 +116,7 @@
                         </svg>
                         <div>
                             <p class="text-sm font-medium text-gray-600">Important</p>
-                            <p class="text-xs mt-1 text-gray-500">Minimum withdrawal Rs 170 hai. 1% fee apply hoti hai (Rs 1 per Rs 100). Withdrawals 24-48 ghanton mein process hoti hain. Apne account details sahi rakhein.</p>
+                            <p class="text-xs mt-1 text-gray-500">Minimum withdrawal Rs {{ number_format($min, 0) }} hai. {{ rtrim(rtrim(number_format((float) config('withdrawals.fee_percent'), 2, '.', ''), '0'), '.') }}% fee apply hoti hai. Withdrawals 24-48 ghanton mein process hoti hain. Apne account details sahi rakhein.</p>
                         </div>
                     </div>
                 </div>

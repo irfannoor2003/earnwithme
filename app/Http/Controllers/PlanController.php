@@ -9,6 +9,7 @@ class PlanController extends Controller
     public function index()
     {
         $plans = Plan::where('is_active', true)->get();
+
         return view('plans', compact('plans'));
     }
 }

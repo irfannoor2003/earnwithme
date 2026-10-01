@@ -102,7 +102,7 @@
                         View FAQ
                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
-                    <a href="https://wa.me/923001234567" target="_blank" class="btn-primary inline-flex items-center">
+                    <a href="https://wa.me/{{ config('services.whatsapp.number') }}" target="_blank" rel="noopener noreferrer" class="btn-primary inline-flex items-center">
                         <span>WhatsApp Us</span>
                     </a>
                 </div>

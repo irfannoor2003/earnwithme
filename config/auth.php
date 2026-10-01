@@ -96,8 +96,14 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
-            'throttle' => 60,
+            // Minutes a reset link stays valid. Kept short deliberately: a
+            // reset link is a live key to a balance-holding account, and
+            // members on mobile data may sit on the email for a while, so
+            // raise this if support reports expired links.
+            'expire' => (int) env('AUTH_PASSWORD_RESET_EXPIRE', 5),
+            // Seconds before another link can be generated for the same
+            // address. Stops token spamming and mailbox flooding.
+            'throttle' => (int) env('AUTH_PASSWORD_RESET_THROTTLE', 60),
         ],
     ],
 

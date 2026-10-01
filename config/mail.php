@@ -115,4 +115,6 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    'contact_address' => env('CONTACT_FORM_RECIPIENT', 'support@meearningplatform.com'),
+
 ];

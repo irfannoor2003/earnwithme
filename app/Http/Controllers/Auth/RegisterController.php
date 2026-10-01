@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -28,7 +29,9 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:15',
-            'password' => ['required', 'confirmed', Password::min(6)],
+            // Accounts here can hold real money, so require more than a
+            // 6-character lowercase password.
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
             'referral_code' => 'nullable|string|max:10',
         ]);
 
@@ -40,7 +43,7 @@ class RegisterController extends Controller
                 ->where('is_admin', false)
                 ->first();
 
-            if (!$referrer) {
+            if (! $referrer) {
                 return back()
                     ->withInput()
                     ->withErrors(['referral_code' => 'This referral code is invalid or the referrer has not activated their account yet.']);
@@ -55,7 +58,9 @@ class RegisterController extends Controller
             'referred_by' => $referrer?->id,
         ]);
 
+        event(new Registered($user));
         auth()->login($user);
+        $request->session()->regenerate();
 
         return redirect()->route('dashboard')->with('success', 'Welcome to Me Earning! Please activate your account by selecting a plan.');
     }

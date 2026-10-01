@@ -56,7 +56,7 @@
 
     <div class="receipt-wrap">
         <div class="receipt">
-            <div class="stamp">Paid</div>
+            <div class="stamp">{{ $type === 'Reward' ? 'Awarded' : 'Approved' }}</div>
 
             <div class="head">
                 <div class="brand">
@@ -86,18 +86,18 @@
                         @if(!empty($record->account_name))
                         <tr><td>Account Title</td><td>{{ $record->account_name }}</td></tr>
                         @endif
-                        <tr><td>Processing Fee (1%)</td><td>Rs {{ number_format($record->fee ?? round(($record->amount) * 0.01, 2), 2) }}</td></tr>
+                        <tr><td>Processing Fee ({{ rtrim(rtrim(number_format((float) config('withdrawals.fee_percent'), 2, '.', ''), '0'), '.') }}%)</td><td>Rs {{ number_format($record->fee ?? \App\Models\Withdrawal::feeFor((float) $record->amount), 2) }}</td></tr>
                     @elseif($type === 'Reward')
                         <tr><td>Reason</td><td>{{ $record->reason }}</td></tr>
                         <tr><td>Issued By</td><td>{{ $record->issuer->name ?? 'Admin' }} (Admin)</td></tr>
                     @endif
 
-                    <tr><td>Status</td><td style="color:#16a34a; text-transform:capitalize; font-weight:700;">{{ $type === 'Reward' ? 'Awarded' : 'Approved' }}</td></tr>
+                    <tr><td>Status</td><td style="color:#16a34a; text-transform:capitalize; font-weight:700;">{{ $type === 'Reward' ? 'Awarded' : ucfirst($record->status ?? 'approved') }}</td></tr>
                 </table>
 
                 <div class="amount-box">
                     <div>
-                        <p class="amount-label">{{ $type === 'Withdrawal' ? 'Amount Paid' : ($type === 'Reward' ? 'Reward Amount' : 'Amount Received') }}</p>
+                        <p class="amount-label">{{ $type === 'Withdrawal' ? 'Amount Approved' : ($type === 'Reward' ? 'Reward Amount' : 'Amount Received') }}</p>
                         <p class="amount-value">Rs {{ number_format($record->amount, $record->amount == intval($record->amount) ? 0 : 2) }}</p>
                     </div>
                     <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8.5 12.5 2.5 2.5 5-5.5"/></svg>

@@ -52,9 +52,10 @@
                             <td class="px-6 py-4">
                                 @if($withdrawal->status === 'pending')
                                     <div class="flex items-center gap-2">
-                                        <form action="{{ route('admin.withdrawals.approve', $withdrawal) }}" method="POST">
+                                        <form action="{{ route('admin.withdrawals.approve', $withdrawal) }}" method="POST" class="flex items-center gap-1.5">
                                             @csrf
-                                            @method('POST')
+                                            <input type="text" name="payout_reference" placeholder="Txn ref"
+                                                class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#4caf2f]" />
                                             <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-[#4caf2f] hover:bg-[#43a027] text-white text-xs font-medium rounded-xl transition-colors">Approve</button>
                                         </form>
                                         <form action="{{ route('admin.withdrawals.reject', $withdrawal) }}" method="POST">
@@ -62,6 +63,18 @@
                                             @method('POST')
                                             <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-xl transition-colors">Reject</button>
                                         </form>
+                                    </div>
+                                @elseif($withdrawal->payout_reference || $withdrawal->paid_at)
+                                    <div class="text-xs">
+                                        @if($withdrawal->paid_amount)
+                                            <p class="font-semibold text-gray-900">Paid Rs. {{ number_format((float) $withdrawal->paid_amount) }}</p>
+                                        @endif
+                                        @if($withdrawal->payout_reference)
+                                            <p class="text-gray-500 font-mono">{{ $withdrawal->payout_reference }}</p>
+                                        @endif
+                                        @if($withdrawal->paid_at)
+                                            <p class="text-gray-400">{{ $withdrawal->paid_at->format('d M Y, h:i A') }}</p>
+                                        @endif
                                     </div>
                                 @else
                                     <span class="text-xs text-gray-500">-</span>

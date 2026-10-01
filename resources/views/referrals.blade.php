@@ -95,6 +95,14 @@
                 <p class="text-2xl font-bold text-blue-500">{{ $level5->count() }}</p>
                 <p class="text-xs mt-1 text-gray-500">Level 5</p>
             </div>
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[#d7f0d0]">
+                <p class="text-2xl font-bold text-pink-500">{{ $level6->count() }}</p>
+                <p class="text-xs mt-1 text-gray-500">Level 6</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[#d7f0d0]">
+                <p class="text-2xl font-bold text-cyan-600">{{ $level7->count() }}</p>
+                <p class="text-xs mt-1 text-gray-500">Level 7</p>
+            </div>
         </div>
         @endif
 
@@ -122,10 +130,11 @@
                 ];
                 $levelData = [
                     1 => $level1, 2 => $level2, 3 => $level3, 4 => $level4, 5 => $level5,
+                    6 => $level6, 7 => $level7,
                 ];
             @endphp
 
-            @foreach([1, 2, 3, 4, 5, 6, 7] as $lvl)
+            @foreach($levelConfigs as $lvl => $cfg)
                 @php $cfg = $levelConfigs[$lvl]; @endphp
                 <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                     <button onclick="toggleSection('level{{ $lvl }}')" class="w-full flex items-center justify-between p-5 transition-colors hover:bg-gray-50">
