@@ -118,6 +118,21 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | Minutes the signed verification link stays valid. Matched to the
+    | password reset window so both account-recovery links behave the same.
+    | Declared explicitly instead of leaning on the framework default (60).
+    |
+    */
+
+    'verification' => [
+        'expire' => (int) env('AUTH_VERIFICATION_EXPIRE', 5),
+    ],
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

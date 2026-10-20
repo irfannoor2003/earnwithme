@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         Plan::firstOrCreate(['name' => 'Premium'], [
             'price' => 350,
             'description' => 'Unlock your full earning potential with our Premium plan. Start earning through our 7-level referral commission system today.',
-            'features' => ['7-Level Referral Commission', 'Direct Referral Bonus (Rs 20)', 'Daily Commission Tracking', 'JazzCash/EasyPaisa Withdrawal', 'Full Dashboard & Analytics', 'Priority Support'],
+            'features' => ['7-Level Referral Commission', 'Daily Commission Tracking', 'JazzCash/EasyPaisa Withdrawal', 'Full Dashboard & Analytics', 'Priority Support'],
             'is_active' => true,
         ]);
 

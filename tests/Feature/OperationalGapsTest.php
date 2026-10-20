@@ -127,27 +127,36 @@ class OperationalGapsTest extends TestCase
     // Settings cache
     // ---------------------------------------------------------------------
 
-    public function test_settings_save_invalidates_cache_once_and_fully(): void
+    public function test_admin_settings_page_cannot_write_adsense_credentials(): void
     {
+        // AdSense lives in .env now. There must be no route at all that lets a
+        // browser write it - not even for an admin.
         $admin = $this->admin();
-
-        Setting::set('adsense_enabled', '1');
-        $this->assertSame('1', Setting::get('adsense_enabled'));
-
-        // Prime the cache.
-        $this->assertSame('1', Setting::get('adsense_enabled'));
 
         $this->actingAs($admin)->post('/admin/settings', [
             'adsense_enabled' => 'on',
             'adsense_publisher_id' => 'pub-123',
-            'adsense_ad_slot_header' => 'slot-header',
-        ])->assertRedirect('/admin/settings');
+        ])->assertMethodNotAllowed();
 
-        // A partial save must not leave the cache showing stale values.
-        $this->assertSame('1', Setting::get('adsense_enabled'));
-        $this->assertSame('pub-123', Setting::get('adsense_publisher_id'));
-        $this->assertSame('slot-header', Setting::get('adsense_ad_slot_header'));
-        $this->assertSame('', Setting::get('adsense_ad_slot_footer'), 'unsent fields must be blanked, not left stale');
+        $this->assertSame('', Setting::get('adsense_publisher_id', ''));
+    }
+
+    public function test_settings_batch_write_invalidates_cache_fully(): void
+    {
+        Setting::set('a', 'old');
+        Setting::set('b', 'keep');
+
+        // Prime the cache.
+        $this->assertSame('old', Setting::get('a'));
+
+        Setting::setMany([
+            'a' => 'new',
+            'c' => 'added',
+        ]);
+
+        $this->assertSame('new', Setting::get('a'));
+        $this->assertSame('keep', Setting::get('b'), 'untouched keys must survive the batch');
+        $this->assertSame('added', Setting::get('c'));
     }
 
     public function test_settings_batch_write_is_atomic(): void

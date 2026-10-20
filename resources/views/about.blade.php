@@ -25,12 +25,12 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6" style="letter-spacing: -0.5px;">Humara <span class="gradient-text">Story</span></h2>
                     <div class="space-y-4 text-gray-500 leading-relaxed">
-                        <p>Me Earning 2024 mein launch hua ek Pakistani platform hai jo logon ko apni financial community build karne ka mauqa deta hai.</p>
+                        <p>Me Earning 2026 mein launch hua ek Pakistani platform hai jo logon ko apni financial community build karne ka mauqa deta hai.</p>
                         <p>Humara maanna hai ke jab log aik doosre ki madad karein, to sab kaamyaab ho sakte hain.</p>
-                        <p>Aaj hamare paas hazaron active members hain jo apni daily earning kar rahe hain.</p>
+                        <p>Aaj hamare paas {{ number_format($totalUsers) }} members hain jo apni daily earning kar rahe hain.</p>
                     </div>
                     <div class="space-y-3 urdu-text text-gray-400 text-sm leading-relaxed mt-4">
-                        <p>Me Earning 2024 میں launch ہوا ایک پاکستانی platform ہے جو لوگوں کو اپنی مالی community بنانے کا موقع دیتا ہے۔</p>
+                        <p>Me Earning 2026 میں launch ہوا ایک پاکستانی platform ہے جو لوگوں کو اپنی مالی community بنانے کا موقع دیتا ہے۔</p>
                         <p>ہمارا ماننا ہے کہ جب لوگ ایک دوسرے کی مدد کریں، تو سب کامیاب ہو سکتے ہیں۔</p>
                         <p>آج ہمارے پاس ہزاروں active members ہیں جو اپنی روزانہ earning کر رہے ہیں۔</p>
                     </div>

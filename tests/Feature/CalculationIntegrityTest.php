@@ -42,8 +42,63 @@ class CalculationIntegrityTest extends TestCase
             1 => 110, 2 => 50, 3 => 30, 4 => 20, 5 => 10, 6 => 10, 7 => 10,
         ], CommissionService::LEVEL_AMOUNTS);
 
-        $this->assertSame(20, CommissionService::DIRECT_REFERRAL_BONUS);
         $this->assertSame(7, CommissionService::MAX_LEVEL);
+    }
+
+    public function test_no_plan_advertises_the_removed_welcome_bonus(): void
+    {
+        (new DatabaseSeeder)->run();
+
+        $plan = Plan::first();
+
+        $this->assertNotNull($plan, 'the starter plan should exist after seeding');
+        $this->assertStringNotContainsStringIgnoringCase(
+            'bonus',
+            json_encode($plan->features),
+            'the signup bonus was removed: level 1 (Rs 110) is the whole direct-referral reward'
+        );
+    }
+
+    public function test_the_bonus_cleanup_migration_strips_every_wording(): void
+    {
+        // A plan row that predates the removal, written the way the old
+        // seeder wrote it. DatabaseSeeder uses firstOrCreate, so these rows
+        // survive re-seeding and only the migration can clean them.
+        Plan::create([
+            'name' => 'Legacy',
+            'price' => 350,
+            'features' => [
+                '7-Level Referral Commission',
+                'Direct Referral Bonus (Rs 20)',
+                'Rs 20 Welcome Bonus',
+                'signup bonus',
+                'Daily Commission Tracking',
+            ],
+            'is_active' => true,
+        ]);
+
+        $migration = require database_path(
+            'migrations/2026_10_02_000001_remove_welcome_bonus_from_plan_features.php'
+        );
+
+        $migration->up();
+
+        $features = Plan::where('name', 'Legacy')->first()->features;
+
+        $this->assertSame(
+            ['7-Level Referral Commission', 'Daily Commission Tracking'],
+            $features,
+            'every wording of the removed bonus must be stripped, and only that'
+        );
+
+        // Idempotent: down() deliberately does not restore the bonus, and a
+        // second up() over the already-cleaned row must change nothing.
+        $migration->up();
+
+        $this->assertSame(
+            ['7-Level Referral Commission', 'Daily Commission Tracking'],
+            Plan::where('name', 'Legacy')->first()->features
+        );
     }
 
     public function test_full_chain_pays_the_documented_amounts(): void
@@ -71,32 +126,17 @@ class CalculationIntegrityTest extends TestCase
 
     public function test_platform_stays_in_profit_on_the_premium_plan(): void
     {
-        // 110+50+30+20+10+10+10 = 240, plus the Rs 20 signup bonus = 260.
-        $this->assertSame(260.0, CommissionService::totalLiabilityPerSale());
+        // 110+50+30+20+10+10+10 = 240. Level 1 IS the direct referral reward;
+        // there is no separate signup bonus on top of it.
+        $this->assertSame(240.0, CommissionService::totalLiabilityPerSale());
 
-        // Rs 350 plan less Rs 260 worst-case commission = Rs 90 retained.
-        $this->assertSame(90.0, CommissionService::marginFor(350));
+        // Rs 350 plan less Rs 240 worst-case commission = Rs 110 retained.
+        $this->assertSame(110.0, CommissionService::marginFor(350));
 
         $this->assertGreaterThan(
             0,
             CommissionService::marginFor(350),
             'Selling the Premium plan must never cost the platform money'
-        );
-    }
-
-    public function test_direct_referral_bonus_is_paid_once_and_excluded_from_upline_walk(): void
-    {
-        $referrer = $this->member();
-        $newUser = $this->member(['referred_by' => $referrer->id]);
-
-        $service = new CommissionService;
-        $service->giveDirectReferralBonus($newUser);
-        $service->giveDirectReferralBonus($newUser);
-
-        $this->assertSame(20.0, (float) $referrer->fresh()->balance, 'bonus credited exactly once');
-        $this->assertSame(
-            1,
-            Commission::where('from_user_id', $newUser->id)->where('plan_price', 0)->count()
         );
     }
 
@@ -109,14 +149,12 @@ class CalculationIntegrityTest extends TestCase
 
         $buyer = $this->member(['referred_by' => $top->id]);
 
-        $service = new CommissionService;
-        $service->giveDirectReferralBonus($buyer);
-        $service->distributeCommissions($buyer, 350);
+        (new CommissionService)->distributeCommissions($buyer, 350);
 
         $this->assertSame(0.0, (float) $admin->fresh()->balance);
         $this->assertSame(0.0, (float) $inactive->fresh()->balance);
-        // $top is the buyer's direct referrer: Rs 20 signup bonus + Rs 110 level 1.
-        $this->assertSame(130.0, (float) $top->fresh()->balance, 'payout skips over an inactive member');
+        // $top is the buyer's direct referrer, so level 1 alone pays Rs 110.
+        $this->assertSame(110.0, (float) $top->fresh()->balance, 'payout skips over an inactive member');
     }
 
     // ---------------------------------------------------------------------
@@ -281,9 +319,9 @@ class CalculationIntegrityTest extends TestCase
         $this->actingAs($admin)->post("/admin/deposits/{$deposit->id}/approve");
 
         $this->assertTrue($buyer->fresh()->is_active);
-        // Rs 20 signup bonus + Rs 110 level 1 commission.
-        $this->assertSame(130.0, (float) $referrer->fresh()->balance);
-        $this->assertSame(2, Commission::where('from_user_id', $buyer->id)->count());
+        // Level 1 commission only, and only once despite two approve calls.
+        $this->assertSame(110.0, (float) $referrer->fresh()->balance);
+        $this->assertSame(1, Commission::where('from_user_id', $buyer->id)->count());
     }
 
     public function test_deposit_approval_rejects_a_mismatched_amount(): void
@@ -479,22 +517,29 @@ class CalculationIntegrityTest extends TestCase
             'FAQ commission schedule has drifted from CommissionService::LEVEL_AMOUNTS'
         );
 
-        $this->assertStringContainsString(
-            'a Rs 20 bonus',
-            $home,
-            'FAQ signup bonus has drifted from CommissionService::DIRECT_REFERRAL_BONUS'
-        );
-
         // No page may promise income or track record the product cannot back.
-        foreach (['/', '/plans', '/earning-details', '/about'] as $url) {
+        foreach (['/', '/plans', '/earning-details', '/about', '/register'] as $url) {
             $page = $this->get($url)->assertOk()->getContent();
 
             foreach ([
                 'daily returns plus multi-level',
                 'Join thousands of Pakistanis',
-                'Operating since 2024 with thousands',
+                'Operating since 2026 with thousands',
                 'proven track record',
                 'passive income',
+                // Scale claims must come from the users table, not the markup.
+                // CalculationIntegrityTest::test_registration_shows_the_real_member_count
+                // is the counterweight that keeps the live number honest.
+                '5,000+ Pakistanis',
+                'thousands of active members',
+                'hazaron active members',
+                // The signup bonus was removed: level 1 (Rs 110) is the whole
+                // direct-referral reward. Level 4 legitimately pays Rs 20, so
+                // only the bonus wording is blocked, never the amount.
+                'Welcome Bonus',
+                'welcome bonus',
+                'gets a Rs 20 bonus',
+                'Direct Referral Bonus',
             ] as $claim) {
                 $this->assertStringNotContainsString(
                     $claim,
@@ -519,7 +564,88 @@ class CalculationIntegrityTest extends TestCase
         }
     }
 
-    public function test_receipts_do_not_claim_unpaid_records_are_paid(): void
+    public function test_registration_shows_the_real_member_count(): void
+    {
+        $admin = $this->member(['is_admin' => true]);
+        $this->member();
+        $this->member();
+
+        // Two members, and the admin is not one of them.
+        $expected = User::where('is_admin', false)->count();
+        $this->assertSame(2, $expected);
+
+        $html = $this->get('/register')->assertOk()->getContent();
+
+        $this->assertStringContainsString(
+            'Join '.number_format($expected).' Pakistanis already earning',
+            $html,
+            'the register page must quote the users table, not a hardcoded figure'
+        );
+        $this->assertStringNotContainsString('Join 1 Pakistani ', $html);
+    }
+
+    /**
+ * Every rupee figure on every public page is asserted against
+ * CommissionService / config, so a change to the money cannot silently leave
+ * the marketing copy quoting stale amounts.
+ */
+public function test_every_published_rupee_figure_matches_the_commission_schedule(): void
+    {
+        $levels = CommissionService::LEVEL_AMOUNTS;
+
+        foreach (['/', '/plans', '/earning-details', '/business-plan'] as $url) {
+            $page = $this->get($url)->assertOk()->getContent();
+
+            foreach ($levels as $level => $amount) {
+                $this->assertMatchesRegularExpression(
+                    '/Rs '.number_format($amount).'\b(?![\d,])/',
+                    $page,
+                    "Level {$level} should be published as Rs {$amount} on {$url}"
+                );
+            }
+        }
+
+        // The level grid must not quote an amount that is no longer in the schedule.
+        $this->assertSame(7, count($levels));
+        $this->assertSame(
+            array_keys($levels),
+            range(1, CommissionService::MAX_LEVEL),
+            'levels must be numbered 1..MAX_LEVEL with no gaps'
+        );
+    }
+
+public function test_the_earnings_example_total_is_the_sum_of_its_own_rows(): void
+    {
+        $page = $this->get('/earning-details')->assertOk()->getContent();
+
+        // "5 Direct Referrals x Rs 110", "25 Level 2 referrals x Rs 50", ...
+        preg_match_all('/([\d,]+)\s+(?:Direct Referrals|Level (\d) referrals) x Rs ([\d,]+)/', $page, $matches, PREG_SET_ORDER);
+
+        $this->assertNotEmpty($matches, 'the example table should still be published');
+
+        $expected = 0;
+
+        foreach ($matches as [, $count, $level, $rate]) {
+            $expected += ((float) str_replace(',', '', $count)) * ((float) str_replace(',', '', $rate));
+
+            if ($level !== '') {
+                $this->assertSame(
+                    (float) str_replace(',', '', $rate),
+                    (float) CommissionService::LEVEL_AMOUNTS[(int) $level],
+                    "the example row for level {$level} quotes a rate the schedule no longer pays"
+                );
+            }
+        }
+
+        // A hardcoded total once sat Rs 250 below the sum of its own rows.
+        $this->assertStringContainsString(
+            'Rs '.number_format($expected),
+            $page,
+            'the published total must equal the sum of the line items above it'
+        );
+    }
+
+public function test_receipts_do_not_claim_unpaid_records_are_paid(): void
     {
         $admin = $this->member(['is_admin' => true]);
         $user = $this->member(['balance' => 1000]);

@@ -105,6 +105,18 @@
                                 ['label' => '15,625 Level 6 referrals x Rs 10', 'amount' => 'Rs 156,250', 'color' => '#ff9800'],
                                 ['label' => '78,125 Level 7 referrals x Rs 10', 'amount' => 'Rs 781,250', 'color' => '#4caf2f'],
                             ];
+
+                            // Summed from the rows above, never typed in by hand:
+                            // a hardcoded total drifted Rs 250 away from its own
+                            // line items and the site published the wrong figure.
+                            $total = array_sum(array_map(
+                                fn (array $row) => (float) str_replace(
+                                    ',',
+                                    '',
+                                    str_replace('Rs ', '', $row['amount'])
+                                ),
+                                $calc
+                            ));
                             @endphp
                             @foreach($calc as $c)
                             <div class="flex justify-between items-center py-2 border-b border-gray-100 gap-3">
@@ -115,7 +127,7 @@
                         </div>
                         <div class="mt-6 pt-4 border-t-2 border-[#c8e6b8] flex justify-between items-center gap-3">
                             <span class="text-base sm:text-xl font-bold text-gray-900">Total Potential Earnings</span>
-                            <span class="text-xl sm:text-2xl font-extrabold gradient-text whitespace-nowrap">Rs 986,550</span>
+                            <span class="text-xl sm:text-2xl font-extrabold gradient-text whitespace-nowrap">Rs {{ number_format($total) }}</span>
                         </div>
                     </div>
                     <p class="text-sm text-gray-400 text-center">*Yeh sirf ek example hai. Actual earnings aap ki team ki activity pe depend karti hain.</p>

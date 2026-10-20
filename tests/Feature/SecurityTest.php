@@ -90,6 +90,52 @@ class SecurityTest extends TestCase
         $this->assertTrue(Hash::check('secret123', $user->fresh()->password));
     }
 
+    public function test_admin_can_change_password_from_admin_settings(): void
+    {
+        $admin = $this->member(['is_admin' => true, 'password' => 'secret123']);
+        $oldToken = 'a-token-signed-against-the-old-password';
+        $admin->forceFill(['remember_token' => $oldToken])->save();
+
+        $this->actingAs($admin)->get('/admin/settings')->assertOk();
+
+        $this->actingAs($admin)->post('/admin/settings/password', [
+            'current_password' => 'secret123',
+            'password' => 'brandnew456',
+            'password_confirmation' => 'brandnew456',
+        ])->assertRedirect('/admin/settings');
+
+        $fresh = $admin->fresh();
+
+        $this->assertTrue(Hash::check('brandnew456', $fresh->password));
+        $this->assertNotSame($oldToken, $fresh->remember_token, 'a token issued against the old password must not survive');
+    }
+
+    public function test_admin_password_change_requires_the_current_password(): void
+    {
+        $admin = $this->member(['is_admin' => true, 'password' => 'secret123']);
+
+        $this->actingAs($admin)->post('/admin/settings/password', [
+            'current_password' => 'nope',
+            'password' => 'brandnew456',
+            'password_confirmation' => 'brandnew456',
+        ])->assertSessionHasErrors('current_password');
+
+        $this->assertTrue(Hash::check('secret123', $admin->fresh()->password));
+    }
+
+    public function test_admin_cannot_reuse_the_current_password(): void
+    {
+        $admin = $this->member(['is_admin' => true, 'password' => 'secret123']);
+
+        $this->actingAs($admin)->post('/admin/settings/password', [
+            'current_password' => 'secret123',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ])->assertSessionHasErrors('password');
+
+        $this->assertTrue(Hash::check('secret123', $admin->fresh()->password));
+    }
+
     public function test_weak_passwords_are_rejected(): void
     {
         // Rate limiting is keyed per client, so clear it between attempts to
@@ -213,7 +259,11 @@ class SecurityTest extends TestCase
         $this->actingAs($notAdmin)->post('/admin/rewards', [
             'user_id' => $target->id, 'amount' => 99999, 'reason' => 'self-deal',
         ])->assertForbidden();
-        $this->actingAs($notAdmin)->post('/admin/settings', ['adsense_enabled' => 'on'])->assertForbidden();
+        $this->actingAs($notAdmin)->post('/admin/settings/password', [
+            'current_password' => 'secret123',
+            'password' => 'newsecret123',
+            'password_confirmation' => 'newsecret123',
+        ])->assertForbidden();
 
         $this->assertSame('pending', $deposit->fresh()->status);
         $this->assertSame('pending', $withdrawal->fresh()->status);
@@ -225,7 +275,6 @@ class SecurityTest extends TestCase
         $admin = $this->member(['is_admin' => true, 'balance' => 0]);
         $buyer = $this->member(['is_active' => false, 'referred_by' => $admin->id]);
 
-        (new CommissionService)->giveDirectReferralBonus($buyer);
         (new CommissionService)->distributeCommissions($buyer, 350);
 
         $this->assertSame(0.0, (float) $admin->fresh()->balance, 'platform never pays itself');

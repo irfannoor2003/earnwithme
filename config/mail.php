@@ -110,9 +110,28 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Theme
+    |--------------------------------------------------------------------------
+    |
+    | "meearning" ships with the brand palette (green CTA, soft tinted shell,
+    | rounded card) so verification and reset mail match the site instead of
+    | the stock grey Laravel layout. The theme file lives in
+    | resources/views/vendor/mail/html/themes/meearning.css.
+    |
+    */
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'meearning'),
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@meearningplatform.com'),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Me Earning Platform')),
     ],
 
     'contact_address' => env('CONTACT_FORM_RECIPIENT', 'support@meearningplatform.com'),

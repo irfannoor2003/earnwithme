@@ -48,12 +48,6 @@
                                 </div>
                                 <span class="text-sm font-medium text-gray-700">7-Level Referral Commission</span>
                             </div>
-                            <div class="flex items-center gap-3 p-3 rounded-xl" style="background: #f8fdf7;">
-                                <div class="w-8 h-8 rounded-lg bg-[#e8f5e1] flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 text-[#4caf2f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                                <span class="text-sm font-medium text-gray-700">Rs 20 Welcome Bonus</span>
-                            </div>
                         </div>
 
                         <div class="mb-8">
@@ -137,7 +131,7 @@
             </div>
             @php
             $faqs = [
-                ['q' => 'How do I earn commissions?', 'a' => 'When someone joins Me Earning using your referral link, you earn a fixed commission: Rs 110 from direct referrals, Rs 50 from level 2, Rs 30 from level 3, Rs 20 from level 4, and Rs 10 each from levels 5-7. Plus, your direct referral gets a Rs 20 bonus!'],
+                ['q' => 'How do I earn commissions?', 'a' => 'When someone joins Me Earning using your referral link and activates a plan, you earn a fixed commission: Rs 110 from direct referrals, Rs 50 from level 2, Rs 30 from level 3, Rs 20 from level 4, and Rs 10 each from levels 5-7.'],
                 ['q' => 'How do I withdraw my earnings?', 'a' => 'You can withdraw your earnings through JazzCash or EasyPaisa. Simply go to your dashboard, click on Withdraw, enter the amount and your account details. Min Rs 170, Max Rs 70,000. 1% fee applies.'],
                 ['q' => 'Is there a minimum withdrawal amount?', 'a' => 'Yes, the minimum withdrawal amount is Rs 170 and maximum is Rs 70,000. A 1% fee applies on all withdrawals.'],
                 ['q' => 'What payment methods do you accept?', 'a' => 'We accept JazzCash and EasyPaisa. All transactions are secure and your financial data is encrypted.'],

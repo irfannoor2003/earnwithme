@@ -24,8 +24,6 @@ class CommissionService
         7 => 10,   // Rs 10
     ];
 
-    const DIRECT_REFERRAL_BONUS = 20; // Rs 20 one-time bonus for new user
-
     /**
      * Deepest level the platform ever pays. Drives both the payout walk and
      * the team tree rendered to members, so the two cannot drift apart.
@@ -35,12 +33,16 @@ class CommissionService
     /**
      * Worst-case commission cost of one fully-populated 7-level chain.
      *
-     * 240 (levels) + 20 (signup bonus) = Rs 260. A shorter chain costs less,
-     * so this is the ceiling the plan price has to clear.
+     * 110+50+30+20+10+10+10 = Rs 240. A shorter chain costs less, so this is
+     * the ceiling the plan price has to clear.
+     *
+     * There is deliberately no separate signup/welcome bonus: level 1 already
+     * pays the referrer Rs 110 for the very same referred signup, so an extra
+     * amount on top would double-pay for one event.
      */
     public static function totalLiabilityPerSale(): float
     {
-        return round(array_sum(self::LEVEL_AMOUNTS) + self::DIRECT_REFERRAL_BONUS, 2);
+        return round(array_sum(self::LEVEL_AMOUNTS), 2);
     }
 
     /**
@@ -91,37 +93,5 @@ class CommissionService
         }
 
         return $commissions;
-    }
-
-    public function giveDirectReferralBonus(User $newUser): void
-    {
-        $referrer = $newUser->referrer;
-
-        if (! $referrer || ! $referrer->is_active || $referrer->is_admin) {
-            return;
-        }
-
-        $alreadyPaid = Commission::where('from_user_id', $newUser->id)
-            ->where('to_user_id', $referrer->id)
-            ->where('level', 1)
-            ->where('plan_price', 0)
-            ->exists();
-
-        if ($alreadyPaid) {
-            return;
-        }
-
-        $bonus = self::DIRECT_REFERRAL_BONUS;
-
-        Commission::create([
-            'from_user_id' => $newUser->id,
-            'to_user_id' => $referrer->id,
-            'level' => 1,
-            'amount' => $bonus,
-            'plan_price' => 0,
-        ]);
-
-        $referrer->increment('balance', $bonus);
-        $referrer->increment('total_earned', $bonus);
     }
 }

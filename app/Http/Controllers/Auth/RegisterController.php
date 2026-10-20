@@ -20,7 +20,12 @@ class RegisterController extends Controller
             $refInvalid = ! User::where('referral_code', $ref)->where('is_active', true)->where('is_admin', false)->exists();
         }
 
-        return view('auth.register', compact('ref', 'refInvalid'));
+        // Counted live from the users table rather than hardcoded. A fixed
+        // number here is a marketing claim the site cannot back up, and the
+        // count grows on its own as people sign up.
+        $memberCount = User::where('is_admin', false)->count();
+
+        return view('auth.register', compact('ref', 'refInvalid', 'memberCount'));
     }
 
     public function store(Request $request)

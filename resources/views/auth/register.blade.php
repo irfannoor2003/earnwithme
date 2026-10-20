@@ -49,7 +49,7 @@
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8A951] to-[#A68B3C] flex items-center justify-center text-xs font-bold text-white border-2 border-white">K</div>
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-xs font-bold text-white border-2 border-white">M</div>
                             </div>
-                            <p class="text-xs text-gray-400">Join 5,000+ Pakistanis already earning</p>
+                            <p class="text-xs text-gray-400">Join {{ number_format($memberCount) }} {{ \Illuminate\Support\Str::plural('Pakistani', $memberCount) }} already earning</p>
                         </div>
                     </div>
                 </div>
@@ -101,18 +101,47 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-data="{ show: false }">
                             <div>
                                 <label for="password" class="block text-sm font-semibold text-gray-600 mb-2">Password</label>
-                                <input type="password" id="password" name="password" required
-                                    class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4caf2f] focus:ring-2 focus:ring-[#4caf2f]/10 transition-all duration-300"
-                                    placeholder="Min 8 characters" />
+                                <div class="relative">
+                                    <input :type="show ? 'text' : 'password'" type="password" id="password" name="password" required minlength="8"
+                                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 pr-12 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4caf2f] focus:ring-2 focus:ring-[#4caf2f]/10 transition-all duration-300"
+                                        placeholder="e.g. MeEarning2026" autocomplete="new-password" />
+                                    <button type="button" @click="show = !show" :aria-label="show ? 'Hide password' : 'Show password'"
+                                        class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-[#43a027] focus:outline-none focus:text-[#43a027] transition-colors">
+                                        <svg x-show="!show" x-cloak class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        </svg>
+                                        <svg x-show="show" x-cloak class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="mt-2 text-xs text-gray-400 leading-relaxed">
+                                    At least 8 characters, including letters and numbers.
+                                    <span class="urdu-text text-gray-300">کم از کم 8 کردار، انگریز اور نمبر شامل۔</span>
+                                </p>
                             </div>
                             <div>
                                 <label for="password_confirmation" class="block text-sm font-semibold text-gray-600 mb-2">Confirm Password</label>
-                                <input type="password" id="password_confirmation" name="password_confirmation" required
-                                    class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4caf2f] focus:ring-2 focus:ring-[#4caf2f]/10 transition-all duration-300"
-                                    placeholder="Re-enter your password" />
+                                <div class="relative">
+                                    <input :type="show ? 'text' : 'password'" type="password" id="password_confirmation" name="password_confirmation" required minlength="8"
+                                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 pr-12 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4caf2f] focus:ring-2 focus:ring-[#4caf2f]/10 transition-all duration-300"
+                                        placeholder="e.g. MeEarning2026" autocomplete="new-password" />
+                                    <button type="button" @click="show = !show" :aria-label="show ? 'Hide confirm password' : 'Show confirm password'"
+                                        class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-[#43a027] focus:outline-none focus:text-[#43a027] transition-colors">
+                                        <svg x-show="!show" x-cloak class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        </svg>
+                                        <svg x-show="show" x-cloak class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p x-show="show" x-cloak class="mt-2 text-xs text-[#43a027] font-medium">Passwords are visible.</p>
                             </div>
                         </div>
 

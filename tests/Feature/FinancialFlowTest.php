@@ -96,7 +96,98 @@ class FinancialFlowTest extends TestCase
         $this->assertSame('500.00', $user->fresh()->balance);
     }
 
-    public function test_first_approved_deposit_pays_direct_bonus_once(): void
+    /**
+     * The commission path is the whole business: money only ever moves because
+     * an admin approved a deposit. These lock that down.
+ */
+public function test_commission_is_paid_exactly_once_on_approval(): void
+    {
+        [$referrer, $buyer, $admin, $deposit] = $this->activationFixture();
+
+        $this->actingAs($admin)
+            ->post(route('admin.deposits.approve', $deposit))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('110.00', $referrer->fresh()->balance, 'level 1 only, no signup bonus on top');
+        $this->assertSame(1, Commission::where('from_user_id', $buyer->id)->count());
+
+        // A second approve of the same deposit must not pay again.
+        $this->actingAs($admin)
+            ->post(route('admin.deposits.approve', $deposit))
+            ->assertSessionHas('error');
+
+        $this->assertSame('110.00', $referrer->fresh()->balance);
+        $this->assertSame(1, Commission::where('from_user_id', $buyer->id)->count());
+    }
+
+    public function test_no_commission_while_the_deposit_is_still_pending(): void
+    {
+        [$referrer, $buyer, , $deposit] = $this->activationFixture();
+
+        $this->assertSame('pending', $deposit->fresh()->status);
+        $this->assertFalse($buyer->fresh()->is_active);
+
+        $this->assertSame(0.0, (float) $referrer->fresh()->balance, 'nothing is paid before approval');
+        $this->assertSame(0.0, (float) $referrer->fresh()->total_earned);
+        $this->assertSame(0, Commission::count(), 'no commission row may exist yet');
+    }
+
+    public function test_a_rejected_deposit_pays_nobody_and_activates_nobody(): void
+    {
+        [$referrer, $buyer, $admin, $deposit] = $this->activationFixture();
+
+        $this->actingAs($admin)
+            ->post(route('admin.deposits.reject', $deposit))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('rejected', $deposit->fresh()->status);
+        $this->assertFalse($buyer->fresh()->is_active, 'a rejected payment must not activate the plan');
+        $this->assertSame(0.0, (float) $referrer->fresh()->balance);
+        $this->assertSame(0, Commission::count());
+
+        // And the rejected deposit can never be approved afterwards.
+        $this->actingAs($admin)->post(route('admin.deposits.approve', $deposit));
+        $this->assertSame(0.0, (float) $referrer->fresh()->balance);
+    }
+
+    public function test_a_short_deposit_pays_nobody(): void
+    {
+        [$referrer, $buyer, $admin, $deposit] = $this->activationFixture();
+
+        // Underpay for the plan: Rs 1 instead of Rs 350.
+        $deposit->update(['amount' => 1.00]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.deposits.approve', $deposit))
+            ->assertSessionHas('error');
+
+        $this->assertSame('pending', $deposit->fresh()->status, 'a mismatched deposit must not be approved');
+        $this->assertFalse($buyer->fresh()->is_active);
+        $this->assertSame(0.0, (float) $referrer->fresh()->balance);
+        $this->assertSame(0, Commission::count());
+    }
+
+    public function test_a_member_cannot_approve_their_own_deposit(): void
+    {
+        [$referrer, $buyer, , $deposit] = $this->activationFixture();
+
+        $this->actingAs($buyer)
+            ->post(route('admin.deposits.approve', $deposit))
+            ->assertForbidden();
+
+        $this->assertSame('pending', $deposit->fresh()->status);
+        $this->assertFalse($buyer->fresh()->is_active);
+        $this->assertSame(0.0, (float) $referrer->fresh()->balance);
+        $this->assertSame(0, Commission::count());
+    }
+
+    /**
+     * A referrer, an inactive buyer who signed up under them, an admin, and a
+     * pending deposit of the correct amount for the Premium plan.
+     *
+     * @return array{0: User, 1: User, 2: User, 3: Deposit}
+     */
+    private function activationFixture(): array
     {
         $referrer = User::factory()->create(['is_active' => true]);
         $buyer = User::factory()->create([
@@ -119,19 +210,7 @@ class FinancialFlowTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $this->actingAs($admin)
-            ->post(route('admin.deposits.approve', $deposit))
-            ->assertSessionHasNoErrors();
-
-        $this->assertSame('130.00', $referrer->fresh()->balance);
-        $this->assertSame(2, Commission::where('from_user_id', $buyer->id)->count());
-
-        $this->actingAs($admin)
-            ->post(route('admin.deposits.approve', $deposit))
-            ->assertSessionHas('error');
-
-        $this->assertSame('130.00', $referrer->fresh()->balance);
-        $this->assertSame(2, Commission::where('from_user_id', $buyer->id)->count());
+        return [$referrer, $buyer, $admin, $deposit];
     }
 
     public function test_contact_form_sends_the_message_to_support(): void

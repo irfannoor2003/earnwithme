@@ -49,7 +49,6 @@ class AdminDepositController extends Controller
                 'plan_id' => $lockedDeposit->plan_id,
             ]);
 
-            $commissionService->giveDirectReferralBonus($user);
             $commissionService->distributeCommissions($user, (float) $plan->price);
 
             // A plan priced below the full 7-level liability would pay out

@@ -104,11 +104,6 @@
                 </div>
                 @endforeach
             </div>
-
-            <div class="mt-6 rounded-xl p-5 text-center" style="background: #f8fdf7; border: 1px solid #c8e6b8;">
-                <p class="font-semibold" style="color: #43a027;">Plus: Naye member ko Rs 20 Welcome Bonus milta hai!</p>
-                <p class="urdu-text text-[#43a027]/70 text-sm mt-1">اس کے علاوہ، نئے ممبر کو Rs 20 کا خوش آمدید بونس ملتا ہے!</p>
-            </div>
         </div>
     </section>
 

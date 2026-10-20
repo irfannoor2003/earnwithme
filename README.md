@@ -51,11 +51,11 @@ Set the virtual host and production web server document root to this project's `
 
 - Deposit submissions must match the selected plan price; payment transaction IDs cannot be reused for the same payment method.
 - Withdrawal deductions and admin decisions are transactional. Rejection restores the amount and fee and can only happen once.
-- Deposit approval is atomic and one-time. The Rs 20 direct-referral bonus is paid after the referred user's first approved plan.
+- Deposit approval is atomic and one-time. Level 1 (Rs 110) is the entire direct-referral reward; there is no separate signup bonus on top of it.
 - User email verification now uses Laravel's verification contract; login attempts are rate-limited.
 - Contact submissions are emailed to `CONTACT_FORM_RECIPIENT`; WhatsApp links use the shared `WHATSAPP_NUMBER` setting.
 - The seeder is repeatable and contains no fixed admin password. `composer run setup` seeds the starter plan.
-- Feature tests cover deposit validation, duplicate payment references, withdrawal refunds, referral bonuses, contact mail, and verification mail.
+- Feature tests cover deposit validation, duplicate payment references, withdrawal refunds, the commission-only-on-approval path, contact mail, and verification mail. `CalculationIntegrityTest` asserts every published rupee figure against `CommissionService`.
 
 ## Remaining Checks
 

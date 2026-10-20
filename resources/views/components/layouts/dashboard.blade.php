@@ -45,8 +45,8 @@
         .admin-link.active { background: var(--purple-dim); color: var(--purple); }
         .admin-link.active svg { color: var(--purple); }
     </style>
-    @php try { $enabled = \App\Models\Setting::get('adsense_enabled', '0') === '1'; $pubId = \App\Models\Setting::get('adsense_publisher_id', ''); } catch (\Exception $e) { $enabled = false; $pubId = ''; } @endphp
-    @if($enabled && $pubId)
+    @php $pubId = (bool) config('adsense.enabled') ? (string) config('adsense.publisher_id') : ''; @endphp
+    @if($pubId)
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $pubId }}" crossorigin="anonymous"></script>
     @endif
 </head>

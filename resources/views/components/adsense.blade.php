@@ -1,17 +1,12 @@
 @php
-    try {
-        $enabled = \App\Models\Setting::get('adsense_enabled', '0') === '1';
-        $publisherId = \App\Models\Setting::get('adsense_publisher_id', '');
-        $headerSlot = \App\Models\Setting::get('adsense_ad_slot_header', '');
-        $sidebarSlot = \App\Models\Setting::get('adsense_ad_slot_sidebar', '');
-        $footerSlot = \App\Models\Setting::get('adsense_ad_slot_footer', '');
-    } catch (\Exception $e) {
-        $enabled = false;
-        $publisherId = '';
-    }
+    $enabled = (bool) config('adsense.enabled') && config('adsense.publisher_id');
+    $publisherId = (string) config('adsense.publisher_id');
+    $headerSlot = (string) config('adsense.slots.header');
+    $sidebarSlot = (string) config('adsense.slots.sidebar');
+    $footerSlot = (string) config('adsense.slots.footer');
 @endphp
 
-@if($enabled && $publisherId)
+@if($enabled)
     @if($slot === 'header' && $headerSlot)
         <div class="my-6 flex justify-center">
             <ins class="adsbygoogle"

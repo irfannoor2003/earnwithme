@@ -105,5 +105,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/rewards', [AdminRewardController::class, 'store'])->middleware('throttle:20,1')->name('rewards.store');
     Route::get('/rewards/{reward}/receipt', [AdminRewardController::class, 'receipt'])->name('rewards.receipt');
     Route::get('/settings', [AdminSettingsController::class, 'show'])->name('settings');
-    Route::post('/settings', [AdminSettingsController::class, 'update'])->middleware('throttle:20,1')->name('settings.update');
+    // AdSense credentials are developer-owned (.env), so there is no write
+    // route for them. Only the admin's own password is writable here.
+    Route::post('/settings/password', [AdminSettingsController::class, 'updatePassword'])->middleware('throttle:10,1')->name('settings.password');
 });

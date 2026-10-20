@@ -42,7 +42,9 @@ class ContactFormMessage extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.contact-form');
+        // Markdown, not a bare view, so this mail picks up the branded mail
+        // theme alongside the verification and reset mails.
+        return new Content(markdown: 'emails.contact-form');
     }
 
     public function attachments(): array

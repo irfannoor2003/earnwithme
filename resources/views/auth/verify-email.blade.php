@@ -45,7 +45,7 @@
                     </form>
                 </div>
 
-                <p class="text-xs text-gray-400 mt-6">Spam folder mein bhi check karein. Link 60 minutes tak valid hai.</p>
+                <p class="text-xs text-gray-400 mt-6">Spam folder mein bhi check karein. Link {{ config('auth.verification.expire') }} minutes tak valid hai.</p>
             </div>
         </div>
     </section>
